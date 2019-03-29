@@ -10,13 +10,13 @@ class TrEnv(gym.Env):
     metadata = {'render.modes': ['human', 'rgb_array']}
     def __init__(self):
         self.sim = traffic_simulator.TrafficSim()
+        #self.action_space = Discrete(n=2)
+        #self.observation_space = Box(low=0, high=20000, shape=(1,), dtype=np.float32)
 
     def step(self, action):
         self.sim.step(action)
-        ob = self._get_obs()
-        reward = self.sim.getReward()
-        done = False
-        return ob, reward, done, reward
+        ob, reward, done = self._get_obs()
+        return ob, reward, done, False
 
     def _get_obs(self):
         return self.sim.getGameState()
@@ -24,3 +24,4 @@ class TrEnv(gym.Env):
     def reset(self):
         self.sim.reset()
         return self.sim.getGameState()
+    

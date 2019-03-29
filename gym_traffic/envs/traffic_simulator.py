@@ -368,7 +368,7 @@ class NorthLane(Lane):
         self.vehicles_driving = inbound_vehicles_driving
 
     def _create_boundary(self, car, inner, outer):
-        print(str(car))
+        #print(str(car))
         if (car.pos.top >= inner) & (car.pos.bottom <= outer):
             if car not in self.in_bounds:
                 self.in_bounds.append(car)
@@ -580,6 +580,7 @@ class TrafficSim():
         self.south = SouthLane(self.screen, self.background)
         self.east = EastLane(self.screen, self.background)
         self.west = WestLane(self.screen, self.background)
+        self.lanes = [self.east, self.west, self.north, self.south]
         self.count = 0
         self.step_index = 0
 
@@ -588,22 +589,31 @@ class TrafficSim():
         self.signal_controller.draw()
 
     def getGameState(self):
-        #return self.east._get_state(284, 163), self.west._get_state(342, 455),self.south,
-        # _get_state(352, 246), self.south._get_reward()
+        # observation = [(self.east._get_state(284, 163), self.east._get_reward()),
+        #     (self.west._get_state(342, 455), self.west._get_reward()),
+        #     (self.north._get_state(417, 531), self.north._get_reward()),
+        #     ((self.south._get_state(352, 246)), self.south._get_reward())]
+        observation = [self.east._get_state(284, 163),
+            self.west._get_state(342, 455), 
+            self.north._get_state(417, 531), 
+            self.south._get_state(352, 246)]
 
-        #return self.west._get_state(470, 358)
-        #return self.south._get_state(623, 497)
-
-        #for o in self.south.in_bounds:
-        #    print(o)
-        observation = [(self.east._get_state(284, 163), self.east._get_reward()),
-            (self.west._get_state(342, 455), self.west._get_reward()),
-            (self.north._get_state(417, 531), self.north._get_reward()),
-            ((self.south._get_state(623, 497)), self.south._get_reward())]
-        return observation
+        reward = self.getReward()
+        done = False
+        if reward > 20000:
+            done = True
+        #info = 0
+        
+        return observation, reward, done #info
 
     def getReward(self):
-        return self.east._get_reward()
+        total_reward = 0
+
+        for i in self.lanes:
+            total_reward += i._get_reward()
+
+        return total_reward
+    
     def game_over(self):
         # not completed
         return self.north.collision | self.south.collision | self.west.collision | self.east.collision
