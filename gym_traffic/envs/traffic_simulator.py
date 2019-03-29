@@ -150,7 +150,6 @@ class Lane():
                 self.position_matrix[0][6] = 1
                 self.velocity_binary(car, 0, 6)
                 # self.velocity(car, 0, 6)
-            count = count + 1
         #return self.position_matrix, self.velocity_matrix
     def _get_state(self, inner, outer):
         # Create the boundary that we care about to get a position and velocity matrix for
@@ -597,11 +596,16 @@ class TrafficSim():
 
         #for o in self.south.in_bounds:
         #    print(o)
-        return self.north._get_state(417, 531), self.north._get_reward()
+        observation = [(self.east._get_state(284, 163), self.east._get_reward()),
+            (self.west._get_state(342, 455), self.west._get_reward()),
+            (self.north._get_state(417, 531), self.north._get_reward()),
+            ((self.south._get_state(623, 497)), self.south._get_reward())]
+        return observation
 
     def getReward(self):
         return self.east._get_reward()
     def game_over(self):
+        # not completed
         return self.north.collision | self.south.collision | self.west.collision | self.east.collision
     def init(self):
         self.east.reset()
@@ -637,12 +641,11 @@ class TrafficSim():
         pygame.time.delay(50)
 
     def check_for_collisions(self):
+        # not completed
         east = self.east.return_intersection()
         north = self.north.return_intersection()
         west = self.west.return_intersection()
         south = self.south.return_intersection()
-        #print("east: " + str(east))
-        #print("south: " + str(south))
 
         for car in east:
             for k in north:
