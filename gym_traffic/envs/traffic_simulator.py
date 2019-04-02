@@ -681,7 +681,7 @@ class TrafficSim():
 
     def step(self, action=0):
         #dt /= 1000.0
-        #self.action = action # uncomment in order to make the action work for the gym environment
+        self.action = action # uncomment in order to make the action work for the gym environment
         self._handle_player_events() # gets which key the player hit
         self.signal_controller.act(self.action)
         self.draw() # draws the background

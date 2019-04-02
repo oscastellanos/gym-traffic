@@ -10,7 +10,7 @@ class TrEnv(gym.Env):
     metadata = {'render.modes': ['human', 'rgb_array']}
     def __init__(self):
         self.sim = traffic_simulator.TrafficSim()
-        #self.action_space = Discrete(n=2)
+        self.action_space = spaces.Discrete(n=2)
         #self.observation_space = Box(low=0, high=20000, shape=(1,), dtype=np.float32)
 
     def step(self, action):
