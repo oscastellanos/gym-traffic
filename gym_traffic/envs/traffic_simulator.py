@@ -14,9 +14,6 @@ import time
 
 
 sys.path.append('../')
-#from ple.environments import base
-#from example_support import ExampleAgent, ReplayMemory, loop_play_forever
-#from base.pygamewrapper import PyGameWrapper
 
 main_dir = os.path.split(os.path.abspath(__file__))[0]
 
@@ -75,7 +72,6 @@ class CarVertical(Car):
     def move(self):
         self.pos = self.pos.move(0, self.speed)
 
-
 class Lane():
     def __init__(self, screen, background):
         self.mean = 30
@@ -114,8 +110,7 @@ class Lane():
             if car in self.in_bounds:
                 self.in_bounds.remove(car)
                 self.count -= 1
-        #for car in self.in_bounds:
-         #   print(str(car))
+        
         # Next, create the position, velocity matrices
     def _create_matrices(self):
         self.position_matrix = np.zeros((1, 7))
@@ -157,30 +152,13 @@ class Lane():
            self._create_boundary(o, inner, outer)
 
         self._create_matrices()
-        # use the code below to print the position matrix!
-        # xyyyz
-        #print(self.position_matrix)
-        #print(self.in_bounds)
-        return self.position_matrix, self.velocity_matrix
+        return self.position_matrix #self.velocity_matrix
+    
     def _get_reward(self):
         for car in self.vehicles_driving:
             self.reward_sum += car.waiting
         return self.reward_sum
     def return_intersection(self):
-        # for o in self.intersection:
-        #     if o.pos.left < 290 | o.pos.left > 320:
-        #         self.intersection.remove(o)
-        #
-        # for car in self.vehicles_driving:
-        #     if (car.pos.left >= 290) & (car.pos.right <= 320):
-        #         if car not in self.intersection:
-        #             self.intersection.append(car)
-        #
-        # for car in self.intersection:
-        #     if (car.collidelist(self.intersection)) > 0:
-        #         return True
-        #     else:
-        #         return False
         return self.intersection
     def reset(self):
         self.vehicles_driving = []
@@ -583,28 +561,43 @@ class TrafficSim():
         self.lanes = [self.east, self.west, self.north, self.south]
         self.count = 0
         self.step_index = 0
+        #self.position_matrix = np.zeros((16,16))
 
     def draw(self):
         self.screen.blit(self.background, (0, 0))
         self.signal_controller.draw()
+
+    # def getGameState(self):
+    #     observation = np.zeros((16,16))
+    def maps(self, lane):
+        if(lane == "east"):
+            obs = self.east._get_state(284, 163)
+            for i in range(7):
+                print("This is obs[i] " + str(obs[i]))
+                self.position_matrix[8][i] = obs[i]
 
     def getGameState(self):
         # observation = [(self.east._get_state(284, 163), self.east._get_reward()),
         #     (self.west._get_state(342, 455), self.west._get_reward()),
         #     (self.north._get_state(417, 531), self.north._get_reward()),
         #     ((self.south._get_state(352, 246)), self.south._get_reward())]
-        observation = [self.east._get_state(284, 163),
+        
+        observation = np.array([self.east._get_state(284, 163),
             self.west._get_state(342, 455), 
             self.north._get_state(417, 531), 
-            self.south._get_state(352, 246)]
+            self.south._get_state(352, 246)])
+
+        observation = observation.reshape(4,7)
+        #print(observation.shape)
+        #self.maps("east")
+        #observation = self.position_matrix
 
         reward = self.getReward()
         done = False
         if reward > 20000:
             done = True
-        #info = 0
-        
-        return observation, reward, done #info
+        info = self.signal_controller.currentSignal()
+        return observation, reward, done, info
 
     def getReward(self):
         total_reward = 0
@@ -678,8 +671,14 @@ class TrafficSim():
         self.south.generateVehicles()
         self.south.update(self.signal_controller.currentSignal())
 
+# NEED TO IMPLEMENT THE RENDER METHOD
+    def render(self):
+        self.draw()
+        self.update_all_lanes()
+        self.display_update()
+        self.signal_controller.draw()
 
-    def step(self, action=0):
+    def step(self, action):
         #dt /= 1000.0
         self.action = action # uncomment in order to make the action work for the gym environment
         self._handle_player_events() # gets which key the player hit
