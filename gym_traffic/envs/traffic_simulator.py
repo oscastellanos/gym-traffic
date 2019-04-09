@@ -671,12 +671,9 @@ class TrafficSim():
         self.south.generateVehicles()
         self.south.update(self.signal_controller.currentSignal())
 
-# NEED TO IMPLEMENT THE RENDER METHOD
+    # NEED TO IMPLEMENT THE RENDER METHOD
     def render(self):
-        self.draw()
-        self.update_all_lanes()
-        self.display_update()
-        self.signal_controller.draw()
+        return self.screen
 
     def step(self, action):
         #dt /= 1000.0

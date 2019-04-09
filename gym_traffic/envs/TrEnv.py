@@ -13,6 +13,7 @@ class TrEnv(gym.Env):
         self.sim = traffic_simulator.TrafficSim()
         self.action_space = spaces.Discrete(n=2)
         self.observation_space = spaces.Box(low=0, high=1, shape=(4,7), dtype=np.uint8)
+        #self.viewer = rendering.Viewer()
 
     def step(self, action):
         # self.sim.step(action)
@@ -27,13 +28,19 @@ class TrEnv(gym.Env):
         self.sim.reset()
         return self.sim.getGameState()
 
-    def render(self, mode):
+    def render(self, mode='human'):
+        #from gym_traffic.envs import rendering
+        #s = self.state 
+        #if self.viewer is None:
+        #    self.viewer = rendering.Viewer(500,500)
+        return self.sim.render()
+
+
+        # pygame.init()
         
-        pygame.init()
-        
-        #game.screen = pygame.display.set_mode(game.getScreenDims(), 0, 32)
-        game.clock = pygame.time.Clock()
-        game.rng = np.random.RandomState(24)
-        game.init()
+        # #game.screen = pygame.display.set_mode(game.getScreenDims(), 0, 32)
+        # game.clock = pygame.time.Clock()
+        # game.rng = np.random.RandomState(24)
+        # game.init()
 
     

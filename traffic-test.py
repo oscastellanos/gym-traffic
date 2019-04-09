@@ -4,9 +4,7 @@ import gym_traffic
 
 if __name__ == "__main__":
     env = gym.make("traffic-v1")
-    #env = gym.wrappers.Monitor(env, "random")
-
-    
+    #env = gym.wrappers.Monitor(env, "dqn")
     episodes = 2000
 
     for e in range(episodes):
@@ -23,7 +21,6 @@ if __name__ == "__main__":
             obs, reward_previous, done, _ = env.step(action)
             print(obs.shape)
             
-
             if (action == 0):
                 for i in range(15):
                     total_steps += 1

@@ -3,7 +3,7 @@ import gym_traffic
 import numpy as np
 import tensorflow as tf
 import random
-
+import gym.wrappers
 
 class ReplayBuffer(object):
     def __init__(self, capacity):
@@ -23,6 +23,9 @@ class ReplayBuffer(object):
         batch = random.sample(self.buffer, batch_size)
         obs0, act, rwd, obs1, done = map(np.stack, zip(*batch))
         return obs0, act, rwd, obs1, done
+
+    def print(self):
+        print(self.buffer)
 
 
 class QValueNetwork(object):
@@ -81,6 +84,17 @@ class DQN(object):
         self.sess.run(tf.global_variables_initializer())
         self.sess.run(self.target_updates)
 
+    def variable_summaries(var):
+        with tf.name_scope('summaries'):
+            mean = tf.reduce_mean(var)
+            tf.summary.scalar('mean', mean)
+            with tf.name_scope('stddev'):
+                stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
+                tf.summary.scalar('stddev', stddev)
+                tf.summary.scalar('max', tf.reduce_max(var))
+                tf.summary.scalar('min', tf.reduce_min(var))
+                tf.summary.histogram('histogram', var)
+
     def step(self, obs):
         if obs.ndim < 2: obs = obs[np.newaxis, :]
         action = self.sess.run(self.q_value0, feed_dict={self.OBS0: obs})
@@ -91,15 +105,22 @@ class DQN(object):
         return action
 
     def learn(self):
-        obs0, act, rwd, obs1, done = self.memory.sample(batch_size=128)
-
-        target_q_value1 = self.sess.run(self.target_q_value1,
+        obs0, act, rwd, obs1, done = self.memory.sample(batch_size=10)
+        print(self.memory)
+        with tf.variable_scope('target'):
+            target_q_value1 = self.sess.run(self.target_q_value1,
                                         feed_dict={self.OBS1: obs1, self.RWD: rwd, self.DONE: np.float32(done)})
-
+            self.variable_summaries(target_q_value1)
+        
+        merged = tf.summary.merge_all()
+        train_writer = tf.summary.FileWriter("./summaries", sess.graph)
         self.sess.run(self.q_value_train_op,feed_dict={self.OBS0: obs0, self.ACT: act,
                                                        self.TARGET_Q: target_q_value1})
-
+        summary = self.sess.run(merged)
+        train_writer.add_summary(summary)
         self.sess.run(self.target_updates)
+
+    
 
 
 def phase(env, action, frames):
@@ -111,13 +132,12 @@ def phase(env, action, frames):
 
 if __name__ == "__main__":
     env = gym.make('traffic-v1')
+    #env = gym.wrappers.Monitor(env, "dqn")
     env.seed(1)
     env = env.unwrapped
 
-    print("ENV.action_space.n: " + str(env.action_space.n))
-    print("ENV.observation_space.shape[0] "+ str(env.observation_space.shape[0]))
     agent = DQN(act_dim=env.action_space.n, obs_dim=env.observation_space.shape[1],
-                lr_q_value=0.02, gamma=0.999, epsilon=0.2)
+                lr_q_value=0.02, gamma=0.999, epsilon=0.3)
 
     nepisode = 1000
     iteration = 0
@@ -136,35 +156,42 @@ if __name__ == "__main__":
         total_reward = reward_previous - reward_current
 
         if (signal == 0):
-                status = 0
+            status = 0
         elif (signal == 1):
             status = 1
+        next_state = obs0
 
         while total_steps < 10000:
-            action = agent.step(obs0)
-            action = env.action_space.sample()
+            env.render()
+            action = agent.step(next_state)
+            #print(next_state)
+            #action = env.action_space.sample()
             #obs1, reward_previous, done, _ = env.step(action)
             
             if (status == 0 and action == 0):
+                print("Status is: 0. Action is 0.")
                 status = 0
                 next_state, reward_current, done, _, t_step= phase(env, 0, 15)
                 total_steps += t_step
                 
             elif (status == 0 and action == 1):
+                print("Status is 0. Action is now 1. Switching to Status 1.")
                 phase(env, 2, 25)
-                print("Action is 1. Status is 0. Lights are H-Y, V-R -> H-R, V-G")
+                #print("Action is 1. Status is 0. Lights are H-Y, V-R -> H-R, V-G")
                 status = 1
                 next_state, reward_current, done, _, t_step = phase(env, 1, 45)
                 total_steps += t_step
                 
             
             elif (status == 1 and action == 1):
+                print("Status is 1. Action is 1.")
                 status = 1
                 next_state, reward_current, done, _, t_step = phase(env, 1, 15)
                 total_steps += t_step
                     
             
             elif (status == 1 and action == 0):
+                print("Status is 1. Action is now 0. Switching to Status 0.")
                 phase(env, 4, 25)
                 status = 0
                 next_state, reward_current, done, _, t_step = phase(env, 0, 45)
@@ -173,19 +200,21 @@ if __name__ == "__main__":
             total_reward = reward_previous - reward_current
 
             agent.memory.store_transition(obs0, action, total_reward, next_state, done)
-            print("Signal from before: " + str(_))
-            print("Current Light: " + str(action))
+            
             if total_steps % 10 == 0:
                 print("Episode " + str(e) + " Total reward: " + str(total_reward))
+                #print("Total reward: " + str(total_reward))
             
-            if iteration >= 128 * 3:
-                agent.learn()
-                if iteration % epsilon_step == 0:
-                    agent.epsilon = max([agent.epsilon * 0.99, 0.001])
+            # if iteration >= 10:
+            #     #print("Hello, I'm here!")
+            #     agent.learn()
+            #     #if iteration % epsilon_step == 0:
+            #     agent.epsilon = max([agent.epsilon * 0.99, 0.001])
 
             iteration += 1
 
             if done:
+                env.render()
                 break
             #next_state, reward_current, done, _ = env.step()
             
