@@ -706,7 +706,7 @@ class TrafficSim():
         if self.check_for_collisions():
             print("Collision!")
         self.step_index = self.step_index + 1
-        print(state)
+        #print(state)
         return state
 
     def getScreenRGB(self):
