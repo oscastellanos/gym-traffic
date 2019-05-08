@@ -84,7 +84,7 @@ class DQN(object):
         self.sess.run(tf.global_variables_initializer())
         self.sess.run(self.target_updates)
 
-    def variable_summaries(var):
+    def variable_summaries(self, var):
         with tf.name_scope('summaries'):
             mean = tf.reduce_mean(var)
             tf.summary.scalar('mean', mean)
@@ -119,9 +119,6 @@ class DQN(object):
         summary = self.sess.run(merged)
         train_writer.add_summary(summary)
         self.sess.run(self.target_updates)
-
-    
-
 
 def phase(env, action, frames):
     t_step = 0
@@ -172,6 +169,7 @@ if __name__ == "__main__":
                 print("Status is: 0. Action is 0.")
                 status = 0
                 next_state, reward_current, done, _, t_step= phase(env, 0, 15)
+                
                 total_steps += t_step
                 
             elif (status == 0 and action == 1):
@@ -196,6 +194,7 @@ if __name__ == "__main__":
                 status = 0
                 next_state, reward_current, done, _, t_step = phase(env, 0, 45)
                 total_steps += t_step
+                
                 
             total_reward = reward_previous - reward_current
 
