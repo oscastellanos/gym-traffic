@@ -13,7 +13,7 @@ class TrEnv(gym.Env):
         self.sim = traffic_simulator.TrafficSim()
         self.action_space = spaces.Discrete(n=2)
         self.observation_space = spaces.Box(low=0, high=1, shape=(4,7), dtype=np.uint8)
-        #self.viewer = rendering.Viewer()
+        self.viewer = None
 
     def step(self, action):
         # self.sim.step(action)
@@ -26,14 +26,33 @@ class TrEnv(gym.Env):
 
     def reset(self):
         self.sim.reset()
+        return self.sim.getGameState()[0]
+
+    def _reset(self):
+        self.sim.reset()
         return self.sim.getGameState()
 
-    def render(self, mode='human'):
-        #from gym_traffic.envs import rendering
-        #s = self.state 
-        #if self.viewer is None:
-        #    self.viewer = rendering.Viewer(500,500)
-        return self.sim.render()
+    def _get_image(self):
+        img = self.sim.getScreenRGB()
+        return img
+
+    def render(self, mode='human', close=False):
+        if close:
+            if self.viewer is not None:
+                self.viewer.close()
+                self.viewer = None
+            return
+        img = self._get_image()
+        img_rotated = np.fliplr(np.rot90(np.rot90(np.rot90(img)))) 
+
+        if mode == 'rgb_array':
+            return img_rotated
+        elif mode == 'human':
+            from gym.envs.classic_control import rendering
+            if self.viewer is None:
+                self.viewer = rendering.SimpleImageViewer()
+            self.viewer.imshow(img_rotated)
+        #return self.sim.render()
 
 
         # pygame.init()

@@ -197,7 +197,7 @@ class WestLane(Lane):
         if np.random.rand() > self.num_of_cars:
             occupy = False
             for _ in self.vehicles_driving:
-                if _.pos.left >= 615:
+                if _.pos.left >= 607:
                     occupy = True
                     break
             if occupy == False:
@@ -222,7 +222,7 @@ class WestLane(Lane):
                     self.reward_sum = 0
 
             o.draw()
-            if o.pos.left < 622:
+            if o.pos.left > 0:
                 inbound_vehicles_driving.append(o)
         self.vehicles_driving = inbound_vehicles_driving
 
@@ -341,7 +341,7 @@ class NorthLane(Lane):
                     o.resume_driving()
                     self.reward_sum = 0
             o.draw()
-            if o.pos.top < 750:
+            if o.pos.bottom > 0:
                 inbound_vehicles_driving.append(o)
         self.vehicles_driving = inbound_vehicles_driving
 
@@ -425,7 +425,7 @@ class SouthLane(Lane):
                     o.resume_driving()
                     self.reward_sum = 0
             o.draw()
-            if o.pos.top < 750:
+            if o.pos.top < 744:
                 inbound_vehicles_driving.append(o)
         self.vehicles_driving = inbound_vehicles_driving
 
@@ -548,7 +548,9 @@ class TrafficSim():
         }
         self.reward_sum = 0.0
         self.collision = False
-        self.screen = pygame.display.set_mode((width, height))
+        self.width = width
+        self.height = height
+        self._setup()
         self.background = load_image('road-with-lanes2.png').convert()
         self.action = 0
         self.count = 0
@@ -615,6 +617,16 @@ class TrafficSim():
         self.west.reset()
         self.north.reset()
         self.south.reset()
+
+    def _setup(self):
+        """
+        Setups up the pygame env, the display and game clock.
+        """
+        pygame.init()
+        self.screen = pygame.display.set_mode((self.width, self.height))
+        #self.screen = None
+        self.clock = pygame.time.Clock()
+        
     def reset(self):
         self.init()
     def _handle_player_events(self):
@@ -639,6 +651,7 @@ class TrafficSim():
 
                 if key == self.actions["down"]:
                     self.action = 4
+    
     def display_update(self):
         pygame.display.update()
         pygame.time.delay(50)
@@ -693,8 +706,20 @@ class TrafficSim():
         if self.check_for_collisions():
             print("Collision!")
         self.step_index = self.step_index + 1
+        #print(state)
         return state
 
+    def getScreenRGB(self):
+        """
+        Returns the current game screen in RGB format.
+        Returns
+        --------
+        numpy uint8 array
+            Returns a numpy array with the shape (width, height, 3).
+        """
+
+        return pygame.surfarray.array3d(
+            pygame.display.get_surface()).astype(np.uint8)
 
 
 # quick function to load an image
@@ -713,8 +738,10 @@ def traffic_signal(red_time, green_time, yellow_time):
         for _ in range(yellow_time):
             yield 4
 
+
+"""
 if __name__ == '__main__':
-    pygame.init()
+    #pygame.init()
     game = TrafficSimulator(width=622, height=743)
     #game.screen = pygame.display.set_mode(game.getScreenDims(), 0, 32)
     game.clock = pygame.time.Clock()
@@ -731,7 +758,8 @@ if __name__ == '__main__':
         #     x = game.step(1)
         # else:
         #     x = game.step(0)
-        pygame.display.update()
-        print(x)
+        #pygame.display.update()
+        #print(x)
 
         #time.sleep(.2)
+        # """
